@@ -21,11 +21,6 @@ def login():
         (access_token, expires_in, access_uid) = oauth_weibo(APP_KEY, APP_SECRET,
             APP_CALLBACK, TOKEN_FILE)
 
-    #        if not os.path.isdir('out'):
-    #            os.mkdir('out')
-
-    #        write_token_file(TOKEN_FILE, access_token, expires_in, access_uid)
-
     return APIClient(
         oauth=OAuth(access_token, expires_in, access_uid,
             APP_KEY, APP_SECRET, APP_CALLBACK))
