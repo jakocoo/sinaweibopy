@@ -26,10 +26,12 @@ def _obj_hook(pairs):
         o[str(k)] = v
     return o
 
+
 class APIError(StandardError):
     '''
     raise APIError if got failed json message.
     '''
+
     def __init__(self, error_code, error, request):
         self.error_code = error_code
         self.error = error
@@ -39,10 +41,12 @@ class APIError(StandardError):
     def __str__(self):
         return 'APIError: %s: %s, request: %s' % (self.error_code, self.error, self.request)
 
+
 class JsonObject(dict):
     '''
     general json object that can bind any fields but also act as a dict.
     '''
+
     def __getattr__(self, attr):
         return self[attr]
 
@@ -55,6 +59,7 @@ class JsonObject(dict):
     def __setstate__(self, state):
         self.update(state)
 
+
 def _encode_params(**kw):
     '''
     Encode parameters.
@@ -64,6 +69,7 @@ def _encode_params(**kw):
         qv = v.encode('utf-8') if isinstance(v, unicode) else str(v)
         args.append('%s=%s' % (k, urllib.quote(qv)))
     return '&'.join(args)
+
 
 def _encode_multipart(**kw):
     '''
@@ -91,7 +97,8 @@ def _encode_multipart(**kw):
     data.append('--%s--\r\n' % boundary)
     return '\r\n'.join(data), boundary
 
-_CONTENT_TYPES = { '.png': 'image/png', '.gif': 'image/gif', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.jpe': 'image/jpeg' }
+_CONTENT_TYPES = {'.png': 'image/png', '.gif': 'image/gif', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+                  '.jpe': 'image/jpeg'}
 
 def _guess_content_type(ext):
     return _CONTENT_TYPES.get(ext, 'application/octet-stream')
@@ -104,13 +111,16 @@ def _http_get(url, authorization=None, **kw):
     logging.info('GET %s' % url)
     return _http_call(url, _HTTP_GET, authorization, **kw)
 
+
 def _http_post(url, authorization=None, **kw):
     logging.info('POST %s' % url)
     return _http_call(url, _HTTP_POST, authorization, **kw)
 
+
 def _http_upload(url, authorization=None, **kw):
     logging.info('MULTIPART POST %s' % url)
     return _http_call(url, _HTTP_UPLOAD, authorization, **kw)
+
 
 def _http_call(the_url, method, authorization, **kw):
     '''
@@ -118,12 +128,12 @@ def _http_call(the_url, method, authorization, **kw):
     '''
     params = None
     boundary = None
-    if method==_HTTP_UPLOAD:
+    if method == _HTTP_UPLOAD:
         params, boundary = _encode_multipart(**kw)
     else:
         params = _encode_params(**kw)
-    http_url = '%s?%s' % (the_url, params) if method==_HTTP_GET else the_url
-    http_body = None if method==_HTTP_GET else params
+    http_url = '%s?%s' % (the_url, params) if method == _HTTP_GET else the_url
+    http_body = None if method == _HTTP_GET else params
     req = urllib2.Request(http_url, data=http_body)
     if authorization:
         req.add_header('Authorization', 'OAuth2 %s' % authorization)
@@ -136,8 +146,8 @@ def _http_call(the_url, method, authorization, **kw):
         raise APIError(r.error_code, r.get('error', ''), r.get('request', ''))
     return r
 
-class HttpObject(object):
 
+class HttpObject(object):
     def __init__(self, client, method):
         self.client = client
         self.method = method
@@ -146,22 +156,26 @@ class HttpObject(object):
         def wrap(**kw):
             if self.client.is_expires():
                 raise APIError('21327', 'expired_token', attr)
-            return _http_call('%s%s.json' % (self.client.api_url, attr.replace('__', '/')), self.method, self.client.access_token, **kw)
+            return _http_call('%s%s.json' % (self.client.api_url, attr.replace('__', '/')), self.method,
+                self.client.access_token, **kw)
+
         return wrap
+
 
 class APIClient(object):
     '''
     API client using synchronized invocation.
     '''
-    def __init__(self, app_key, app_secret, redirect_uri=None, response_type='code', domain='api.weibo.com', version='2'):
-        self.client_id = app_key
-        self.client_secret = app_secret
-        self.redirect_uri = redirect_uri
+
+    def __init__(self, oauth, response_type='code', domain='api.weibo.com', version='2'):
+        self.client_id = oauth.app_key
+        self.client_secret = oauth.app_secret
+        self.redirect_uri = oauth.app_callback
         self.response_type = response_type
         self.auth_url = 'https://%s/oauth2/' % domain
         self.api_url = 'https://%s/%s/' % (domain, version)
-        self.access_token = None
-        self.expires = 0.0
+        self.access_token = oauth.access_token
+        self.expires = oauth.expires_in
         self.get = HttpObject(self, _HTTP_GET)
         self.post = HttpObject(self, _HTTP_POST)
         self.upload = HttpObject(self, _HTTP_UPLOAD)
@@ -170,6 +184,10 @@ class APIClient(object):
         self.access_token = str(access_token)
         self.expires = float(expires_in)
 
+    def set_access_token(self, oauth):
+        self.access_token = str(oauth.access_token)
+        self.expires = float(oauth.expires_in)
+
     def get_authorize_url(self, redirect_uri=None, display='default'):
         '''
         return the authroize url that should be redirect.
@@ -177,11 +195,11 @@ class APIClient(object):
         redirect = redirect_uri if redirect_uri else self.redirect_uri
         if not redirect:
             raise APIError('21305', 'Parameter absent: redirect_uri', 'OAuth2 request')
-        return '%s%s?%s' % (self.auth_url, 'authorize', \
-                _encode_params(client_id = self.client_id, \
-                        response_type = 'code', \
-                        display = display, \
-                        redirect_uri = redirect))
+        return '%s%s?%s' % (self.auth_url, 'authorize',\
+                            _encode_params(client_id=self.client_id,\
+                                response_type='code',\
+                                display=display,\
+                                redirect_uri=redirect))
 
     def request_access_token(self, code, redirect_uri=None):
         '''
@@ -190,11 +208,11 @@ class APIClient(object):
         redirect = redirect_uri if redirect_uri else self.redirect_uri
         if not redirect:
             raise APIError('21305', 'Parameter absent: redirect_uri', 'OAuth2 request')
-        r = _http_post('%s%s' % (self.auth_url, 'access_token'), \
-                client_id = self.client_id, \
-                client_secret = self.client_secret, \
-                redirect_uri = redirect, \
-                code = code, grant_type = 'authorization_code')
+        r = _http_post('%s%s' % (self.auth_url, 'access_token'),\
+            client_id=self.client_id,\
+            client_secret=self.client_secret,\
+            redirect_uri=redirect,\
+            code=code, grant_type='authorization_code')
         current = int(time.time())
         expires = r.expires_in + current
         remind_in = r.get('remind_in', None)
