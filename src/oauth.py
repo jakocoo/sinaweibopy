@@ -5,7 +5,6 @@ from __future__ import print_function
 __author__ = "kuliguo"
 __version__ = "0.1"
 
-
 def write_token_file(filename, access_token, expires_in, access_uid):
     """
     Write a token file to hold the oauth token and oauth token secret.
@@ -30,7 +29,8 @@ class OAuth(object):
     An OAuth authenticator.
     """
 
-    def __init__(self, access_token, expires_in, access_uid, app_key, app_secret, app_callback):
+    def __init__(self, access_token, expires_in, access_uid, app_key, app_secret, app_callback,
+                 response_type='code', domain='api.weibo.com'):
         """
         Create the authenticator. If you are in the initial stages of
         the OAuth dance and don't yet have a token or token_secret,
@@ -42,6 +42,6 @@ class OAuth(object):
         self.app_key = app_key
         self.app_secret = app_secret
         self.app_callback = app_callback
+        self.auth_url = 'https://%s/oauth2/' % domain
+        self.response_type = response_type
 
-    def generate_headers(self):
-        return {'Authorization': 'OAuth2 %s' % self.access_token}

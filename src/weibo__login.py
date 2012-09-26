@@ -27,5 +27,5 @@ def login():
 
 if __name__ == '__main__':
     c = login()
-    st = c.get.statuses__user_timeline()
-    print st
+#    st = c.get.statuses__user_timeline()
+#    print st
