@@ -40,7 +40,6 @@ import time
 import urllib
 import urllib2
 import re
-from weibo__login import *
 
 def _obj_hook(pairs):
     '''
@@ -224,11 +223,3 @@ class APIClient(HttpCall):
         uriparts = ()
         HttpCall.__init__(self, api_url=self.api_url, format=self.format, oauth=self.oauth, callablecls=HttpCall,
             uriparts=uriparts)
-
-    def is_expires(self):
-        return HttpCall.is_expires(self)
-
-if __name__ == '__main__':
-    c = login()
-    st = c.statuses.user_timeline()
-    print st

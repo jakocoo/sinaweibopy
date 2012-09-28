@@ -21,7 +21,7 @@ def read_token_file(filename):
     Read a token file and return the oauth token and oauth token secret.
     """
     f = open(filename)
-    return f.readline().strip(), f.readline().strip(), f.readline().strip()
+    return f.readline().strip(), float(f.readline().strip()), f.readline().strip()
 
 
 class OAuth(object):

@@ -7,6 +7,7 @@ from oauth import *
 from oauth_weibo import oauth_weibo
 from weibo import APIClient
 
+import time
 
 def login():
     APP_KEY = '1865902151'
@@ -17,6 +18,9 @@ def login():
 
     try:
         (access_token, expires_in, access_uid) = read_token_file(TOKEN_FILE)
+        if time.time() - expires_in > 0:
+            raise IOError
+
     except IOError, e:
         (access_token, expires_in, access_uid) = oauth_weibo(APP_KEY, APP_SECRET,
             APP_CALLBACK, TOKEN_FILE)
@@ -25,7 +29,3 @@ def login():
         oauth=OAuth(access_token, expires_in, access_uid,
             APP_KEY, APP_SECRET, APP_CALLBACK))
 
-if __name__ == '__main__':
-    c = login()
-#    st = c.get.statuses__user_timeline()
-#    print st
